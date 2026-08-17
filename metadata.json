@@ -1,0 +1,6 @@
+{
+  "name": "OpenKM Cape Town - Mobility Layer & Dual-Use Hub Spec",
+  "description": "Open Standard, Translator App, Hub Bill of Materials, Checkers Sixty60 Partnership Letter, and MyCiTi Value Calculator for Cape Town mobility.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
