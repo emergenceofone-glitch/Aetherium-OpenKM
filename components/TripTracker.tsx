@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Square, Download, Trash2, Shield, Plus, Clock, Bike, Check, RefreshCw } from 'lucide-react';
+import { Play, Square, Download, Trash2, Shield, Plus, Clock, Bike, Check, RefreshCw, Cloud } from 'lucide-react';
 import { TransportMethod, calculateCostKm, METHOD_FACTORS } from './CostCalculator';
 
 export interface TripRecord {
@@ -65,6 +65,7 @@ export default function TripTracker() {
   const [activeDistance, setActiveDistance] = useState<number>(0.0);
   const [selectedMethod, setSelectedMethod] = useState<TransportMethod>('e-bike');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Timer interval when tracking is active
   useEffect(() => {
@@ -177,6 +178,97 @@ export default function TripTracker() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const handleSyncDrive = () => {
+    if (typeof window === 'undefined' || !(window as any).google) {
+      setToastMessage('Google Identity Services not loaded yet.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
+    const clientId = process.env.NEXT_PUBLIC_OAUTH_CLIENT_ID;
+    if (!clientId) {
+      setToastMessage('OAuth Client ID is missing. Cannot sync.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
+    setIsSyncing(true);
+    setToastMessage('Initiating Google Drive sync...');
+
+    try {
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: async (response: any) => {
+          if (response.error !== undefined) {
+            setIsSyncing(false);
+            setToastMessage('Authentication failed.');
+            setTimeout(() => setToastMessage(null), 3000);
+            throw (response);
+          }
+          await uploadToDrive(response.access_token);
+        },
+      });
+      client.requestAccessToken();
+    } catch (err) {
+      setIsSyncing(false);
+      setToastMessage('Failed to initialize sync.');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const uploadToDrive = async (accessToken: string) => {
+    try {
+      setToastMessage('Uploading to Google Drive...');
+      const headers = 'trip_id,timestamp,distance_km,method,cost_zar,fuel_index,duration_sec,anonymous_hash\n';
+      const rows = trips
+        .map(
+          (t) =>
+            `${t.id},"${t.timestamp}",${t.distance_km},${t.method},${t.cost_zar},${t.fuel_index},${t.duration_sec},${t.anonymous_device_hash}`
+        )
+        .join('\n');
+      
+      const csvContent = headers + rows;
+      
+      // Step 1: Create file metadata
+      const metadataRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: `openkm_trips_export_${new Date().toISOString().slice(0, 10)}.csv`,
+          mimeType: 'text/csv',
+        })
+      });
+      
+      if (!metadataRes.ok) throw new Error('Failed to create file metadata');
+      const fileData = await metadataRes.json();
+      
+      // Step 2: Upload content
+      const uploadRes = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileData.id}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'text/csv',
+        },
+        body: csvContent,
+      });
+
+      if (!uploadRes.ok) throw new Error('Upload failed');
+
+      setToastMessage('Successfully synced to Google Drive!');
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err) {
+      console.error(err);
+      setToastMessage('Failed to upload to Google Drive.');
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleClearHistory = () => {
     setTrips([]);
     setToastMessage('Local trip history cleared.');
@@ -200,6 +292,13 @@ export default function TripTracker() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncDrive}
+            disabled={trips.length === 0 || isSyncing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#cbd5e1] text-[#005C99] font-mono text-[11px] font-medium hover:bg-[#f8fafc] transition-all disabled:opacity-50"
+          >
+            <Cloud className="w-3.5 h-3.5" /> {isSyncing ? 'Syncing...' : 'Sync to Drive'}
+          </button>
           <button
             onClick={handleExportCSV}
             disabled={trips.length === 0}

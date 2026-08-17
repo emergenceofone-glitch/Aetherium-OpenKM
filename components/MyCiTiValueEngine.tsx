@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { TrendingUp, Bus, Shield, Check, AlertCircle, ArrowUpRight, RotateCcw } from 'lucide-react';
+import { formatNumber } from '@/lib/utils';
 
 export default function MyCiTiValueEngine() {
   const [baselineDailyTaps, setBaselineDailyTaps] = useState<number>(1420); // station taps before pilot
@@ -45,12 +47,18 @@ export default function MyCiTiValueEngine() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sliders */}
-        <div className="lg:col-span-6 space-y-4">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="lg:col-span-6 space-y-4"
+        >
           <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0]">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[12px] font-semibold text-[#1f2937]">Baseline Daily Station Tap-Ons</span>
               <span className="font-mono font-bold text-[13px] text-[#005C99] bg-white px-2 py-0.5 rounded border border-[#bfdbfe]">
-                {baselineDailyTaps.toLocaleString()} taps / day
+                {formatNumber(baselineDailyTaps)} taps / day
               </span>
             </div>
             <input
@@ -107,7 +115,7 @@ export default function MyCiTiValueEngine() {
             <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0]">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-[11px] font-semibold text-[#334155]">Net Hub Subsidy</span>
-                <span className="font-mono text-[12px] font-bold text-[#b45309]">R {monthlyHubSubsidy.toLocaleString()}/mo</span>
+                <span className="font-mono text-[12px] font-bold text-[#b45309]">R {formatNumber(monthlyHubSubsidy)}/mo</span>
               </div>
               <input
                 type="range"
@@ -120,10 +128,16 @@ export default function MyCiTiValueEngine() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Value Dashboard */}
-        <div className="lg:col-span-6 space-y-4">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-6 space-y-4"
+        >
           <div className={`rounded-xl p-5 border text-white ${isViable ? 'bg-[#0b1220] border-[#1e293b]' : 'bg-[#450a0a] border-[#7f1d1d]'}`}>
             <div className="flex justify-between items-start">
               <div>
@@ -131,7 +145,7 @@ export default function MyCiTiValueEngine() {
                   Net Monthly Protective Value
                 </div>
                 <div className="text-[32px] font-black text-white font-mono mt-1">
-                  ZAR {Math.round(monthlyProtectiveValue).toLocaleString()} <span className="text-[13px] font-normal text-[#94a3b8]">/ month</span>
+                  ZAR {formatNumber(monthlyProtectiveValue)} <span className="text-[13px] font-normal text-[#94a3b8]">/ month</span>
                 </div>
               </div>
               <span
@@ -148,19 +162,19 @@ export default function MyCiTiValueEngine() {
             <div className="mt-4 pt-3 border-t border-white/10 space-y-1.5 text-[11px] font-mono">
               <div className="flex justify-between text-[#94a3b8]">
                 <span>New Monthly Tap-On Volume:</span>
-                <span className="text-white">+{monthlyNewTaps.toLocaleString()} taps</span>
+                <span className="text-white">+{formatNumber(monthlyNewTaps)} taps</span>
               </div>
               <div className="flex justify-between text-[#94a3b8]">
                 <span>Gross Additional Fare Revenue:</span>
-                <span className="text-[#34d399] font-bold">+R {Math.round(monthlyUpliftRevenue).toLocaleString()}</span>
+                <span className="text-[#34d399] font-bold">+R {formatNumber(monthlyUpliftRevenue)}</span>
               </div>
               <div className="flex justify-between text-[#94a3b8]">
                 <span>Net Municipal Hub Cost Subsidy:</span>
-                <span className="text-[#f87171]">-R {monthlyHubSubsidy.toLocaleString()}</span>
+                <span className="text-[#f87171]">-R {formatNumber(monthlyHubSubsidy)}</span>
               </div>
               <div className="flex justify-between text-[#94a3b8] pt-1 border-t border-white/10">
                 <span>Annualized Value Contribution:</span>
-                <span className="text-[#93c5fd] font-bold">R {Math.round(annualProtectiveValue).toLocaleString()} / year</span>
+                <span className="text-[#93c5fd] font-bold">R {formatNumber(annualProtectiveValue)} / year</span>
               </div>
             </div>
           </div>
@@ -173,7 +187,7 @@ export default function MyCiTiValueEngine() {
               Because the e-bike hub bridges the dangerous 2–3km walking gap to the MyCiTi station, it converts lost private jitney trips into high-capacity MyCiTi trunk passengers. The hub pays for itself in additional farebox capture.
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

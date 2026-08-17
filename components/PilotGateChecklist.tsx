@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { CheckCircle2, Circle, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface GateItem {
@@ -88,9 +89,13 @@ export default function PilotGateChecklist() {
       </div>
 
       <div className="space-y-3">
-        {gates.map((g) => (
-          <div
+        {gates.map((g, idx) => (
+          <motion.div
             key={g.id}
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: idx * 0.1 }}
             onClick={() => toggleStatus(g.id)}
             className={`p-4 rounded-xl border transition-all cursor-pointer select-none ${
               g.status === 'passed'
@@ -138,7 +143,7 @@ export default function PilotGateChecklist() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

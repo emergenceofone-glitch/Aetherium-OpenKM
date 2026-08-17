@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import CostCalculator from '@/components/CostCalculator';
 import TripTracker from '@/components/TripTracker';
 import HubBudgetEstimator from '@/components/HubBudgetEstimator';
 import Sixty60LetterEditor from '@/components/Sixty60LetterEditor';
+import GmailMailer from '@/components/GmailMailer';
 import MyCiTiValueEngine from '@/components/MyCiTiValueEngine';
 import PilotGateChecklist from '@/components/PilotGateChecklist';
+import HeaderAuthButton from '@/components/HeaderAuthButton';
 import {
   Bike,
   Bus,
@@ -98,10 +101,11 @@ export function calcCostKm(opts: {
             </span>
             <a
               href="#sec-04"
-              className="px-3 py-1.5 rounded-lg bg-[#111827] text-white hover:bg-[#1f2937] transition-all font-semibold"
+              className="hidden sm:inline-block px-3 py-1.5 rounded-lg bg-[#111827] text-white hover:bg-[#1f2937] transition-all font-semibold"
             >
               Anchor Letter
             </a>
+            <HeaderAuthButton />
           </div>
         </div>
       </header>
@@ -576,6 +580,16 @@ export function calcCostKm(opts: {
             </p>
 
             <Sixty60LetterEditor />
+
+            <div className="mt-8 pt-8 border-t border-[#e2e8f0]">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-[16px] font-bold text-[#111827]">Dedicated Gmail API Dispatcher</h3>
+                  <p className="text-[12px] text-[#64748b]">Direct OAuth-authenticated message delivery with draft creation</p>
+                </div>
+              </div>
+              <GmailMailer />
+            </div>
           </div>
         </section>
 
@@ -601,7 +615,13 @@ export function calcCostKm(opts: {
             </p>
 
             {/* Metrics Matrix Table */}
-            <div className="rounded-xl border border-[#e2e8f0] overflow-hidden mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5 }}
+              className="rounded-xl border border-[#e2e8f0] overflow-hidden mb-8"
+            >
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[680px] text-left border-collapse text-[13px]">
                   <thead className="bg-[#f0f7fc] border-b border-[#bfdbfe] text-[10px] font-mono uppercase tracking-wider text-[#005C99]">
@@ -620,17 +640,24 @@ export function calcCostKm(opts: {
                       { m: 'Side-Road Rejuvenation', how: 'Shared savings fund -> municipal patch log with photo + GPS.', val: 'Visible community co-benefit; patches 2-3km feeder streets directly.' },
                       { m: 'Sixty60 Battery Turnaround', how: 'Average minutes saved per hot swap (anchor tenant logs).', val: 'Anchor tenant ROI keeps hub staffed without municipal budget.' },
                       { m: 'Taxi Rank Multimodal Trips', how: '# trips logged as combined taxi + e-bike mode selector.', val: 'Demonstrates non-competing symbiosis with local taxi associations.' }
-                    ].map((row) => (
-                      <tr key={row.m} className="hover:bg-[#f8fafc]">
+                    ].map((row, idx) => (
+                      <motion.tr 
+                        key={row.m} 
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        className="hover:bg-[#f8fafc]"
+                      >
                         <td className="px-4 py-3 font-bold text-[#111827]">{row.m}</td>
                         <td className="px-4 py-3 text-[#374151]">{row.how}</td>
                         <td className="px-4 py-3 text-[#4b5563] text-[12px]">{row.val}</td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </motion.div>
 
             {/* Interactive Value Engine */}
             <div className="mb-8">

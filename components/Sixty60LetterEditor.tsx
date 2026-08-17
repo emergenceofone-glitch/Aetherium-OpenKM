@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Check, FileText, Download, Edit3, Send } from 'lucide-react';
+import { Copy, Check, FileText, Send, LogIn, LogOut, Mail, FileEdit, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { sendGmailMessage, createGmailDraft } from '@/lib/gmailService';
 
 export default function Sixty60LetterEditor() {
   const [hubLocation, setHubLocation] = useState<string>('Kuyasa MyCiTi Feeder / Makhaza Taxi Rank Side-Road');
@@ -9,7 +11,26 @@ export default function Sixty60LetterEditor() {
   const [senderPhone, setSenderPhone] = useState<string>('+27 (0)21 400 1111');
   const [pilotStartDate, setPilotStartDate] = useState<string>('1st April 2025');
   const [bayRentAmount, setBayRentAmount] = useState<string>('2,500');
+  const [recipientEmail, setRecipientEmail] = useState<string>('sixty60-regional@example.com');
+  const [letterDate, setLetterDate] = useState<string>('16 February 2025');
   const [copied, setCopied] = useState<boolean>(false);
+
+  // Global Auth State
+  const { user, token, isAuthenticated, isLoading: isAuthLoading, signIn, signOut, error: globalAuthError } = useAuth();
+  const [isSending, setIsSending] = useState(false);
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setLocalError(null);
+    try {
+      await signIn();
+    } catch (err: any) {
+      setLocalError(err?.message || 'Sign in encountered an issue.');
+      setTimeout(() => setLocalError(null), 6000);
+    }
+  };
 
   const letterText = `Dear Sixty60 Regional Operations Manager,
 
@@ -34,13 +55,82 @@ Sincerely,
 ${senderName}
 OpenKM Cape Town • MIT Licensed
 Contact: ${senderPhone}
-Date: ${new Date().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+Date: ${letterDate}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(letterText);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
+
+  const handleSendGmail = async () => {
+    if (!token) {
+      await handleLogin();
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Send proposal letter directly to ${recipientEmail} via Gmail API?`
+    );
+    if (!confirmed) return;
+
+    setIsSending(true);
+    setSendSuccess(null);
+    setLocalError(null);
+
+    try {
+      await sendGmailMessage({
+        to: recipientEmail,
+        subject: 'Pilot: Shared E-Bike Hub - Reduced Theft & Downtime for Sixty60 Fleet + Community Access',
+        body: letterText,
+        senderName: senderName || user?.name,
+        senderEmail: user?.email,
+        token,
+      });
+
+      setSendSuccess('Proposal successfully sent via Gmail API!');
+      setTimeout(() => setSendSuccess(null), 5000);
+    } catch (err: any) {
+      console.error('Email send failed:', err);
+      setLocalError(err?.message || 'Failed to send email. Re-authentication may be required.');
+      setTimeout(() => setLocalError(null), 7000);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!token) {
+      await handleLogin();
+      return;
+    }
+
+    setIsDrafting(true);
+    setSendSuccess(null);
+    setLocalError(null);
+
+    try {
+      await createGmailDraft({
+        to: recipientEmail,
+        subject: 'Pilot: Shared E-Bike Hub - Reduced Theft & Downtime for Sixty60 Fleet + Community Access',
+        body: letterText,
+        senderName: senderName || user?.name,
+        senderEmail: user?.email,
+        token,
+      });
+
+      setSendSuccess('Saved as Gmail Draft!');
+      setTimeout(() => setSendSuccess(null), 5000);
+    } catch (err: any) {
+      console.error('Draft save failed:', err);
+      setLocalError(err?.message || 'Failed to save draft in Gmail.');
+      setTimeout(() => setLocalError(null), 7000);
+    } finally {
+      setIsDrafting(false);
+    }
+  };
+
+  const displayError = localError || globalAuthError;
 
   return (
     <div className="rounded-[16px] border border-[#e5e7eb] bg-[#fcfcf9] overflow-hidden shadow-sm">
@@ -57,18 +147,67 @@ Date: ${new Date().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long',
         </div>
 
         <div className="flex items-center gap-2">
+          {displayError && (
+            <span className="text-[11px] text-[#dc2626] bg-[#fef2f2] border border-[#fecaca] px-2.5 py-1 rounded-md max-w-[220px] truncate">
+              {displayError}
+            </span>
+          )}
+          {!isAuthenticated ? (
+            <button
+              onClick={handleLogin}
+              disabled={isAuthLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#cbd5e1] bg-white text-[#111827] text-[12px] font-medium hover:bg-[#f8fafc] transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              {isAuthLoading ? 'Signing in...' : 'Sign in with Google'}
+            </button>
+          ) : (
+            <>
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#f0fdf4] border border-[#bbf7d0] text-[11px] font-mono text-[#15803d]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]"></span>
+                <span className="max-w-[110px] truncate">{user?.email || 'Authorized'}</span>
+              </div>
+              <button
+                onClick={handleSaveDraft}
+                disabled={isDrafting || isSending}
+                title="Save letter as draft in your Gmail account"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1] text-[12px] font-medium hover:bg-[#e2e8f0] transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                <FileEdit className="w-3.5 h-3.5" />
+                {isDrafting ? 'Saving...' : 'Save Draft'}
+              </button>
+              <button
+                onClick={handleSendGmail}
+                disabled={isSending || isDrafting}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#10b981] text-white text-[12px] font-medium hover:bg-[#059669] transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {sendSuccess ? <Check className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+                {isSending ? 'Sending...' : sendSuccess ? sendSuccess : 'Send via Gmail'}
+              </button>
+              <button
+                onClick={() => signOut()}
+                title="Sign out of Google Identity Services"
+                className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-transparent text-[#64748b] hover:bg-[#f1f5f9] text-[12px] font-medium transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+
+          <div className="w-px h-6 bg-[#e2e8f0] mx-1"></div>
+
           <button
             onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#005C99] text-white text-[12px] font-medium hover:bg-[#004877] transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#005C99] text-white text-[12px] font-medium hover:bg-[#004877] transition-all shadow-sm cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? 'Copied to Clipboard' : 'Copy Full Letter'}
+            {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
 
       {/* Editable Fields in Accordion/Grid */}
-      <div className="px-5 md:px-8 py-4 bg-[#f8fafc] border-b grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+      <div className="px-5 md:px-8 py-4 bg-[#f8fafc] border-b grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 text-[11px]">
         <div>
           <label className="block font-mono text-[#64748b] uppercase mb-1">Hub Location</label>
           <input
@@ -79,7 +218,7 @@ Date: ${new Date().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long',
           />
         </div>
         <div>
-          <label className="block font-mono text-[#64748b] uppercase mb-1">Sender Name / Group</label>
+          <label className="block font-mono text-[#64748b] uppercase mb-1">Sender Name</label>
           <input
             type="text"
             value={senderName}
@@ -102,6 +241,24 @@ Date: ${new Date().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long',
             type="text"
             value={bayRentAmount}
             onChange={(e) => setBayRentAmount(e.target.value)}
+            className="w-full bg-white border border-[#cbd5e1] rounded px-2 py-1 text-[#111827] text-[12px]"
+          />
+        </div>
+        <div>
+          <label className="block font-mono text-[#64748b] uppercase mb-1">Letter Date</label>
+          <input
+            type="text"
+            value={letterDate}
+            onChange={(e) => setLetterDate(e.target.value)}
+            className="w-full bg-white border border-[#cbd5e1] rounded px-2 py-1 text-[#111827] text-[12px]"
+          />
+        </div>
+        <div>
+          <label className="block font-mono text-[#64748b] uppercase mb-1">Recipient Email</label>
+          <input
+            type="email"
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
             className="w-full bg-white border border-[#cbd5e1] rounded px-2 py-1 text-[#111827] text-[12px]"
           />
         </div>

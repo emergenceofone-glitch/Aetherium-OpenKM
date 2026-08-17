@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Wrench, Shield, Zap, Check, HelpCircle, TrendingUp, Coins, RotateCcw } from 'lucide-react';
+import { formatNumber } from '@/lib/utils';
 
 export default function HubBudgetEstimator() {
   const [bikeCount, setBikeCount] = useState<number>(5);
@@ -127,7 +128,7 @@ export default function HubBudgetEstimator() {
             <div className="flex justify-between items-center mb-1">
               <span className="text-[12px] font-semibold text-[#1f2937]">Checkers Sixty60 Bay Sublease (2 bays)</span>
               <span className="font-mono font-bold text-[13px] text-[#10b981] bg-white px-2 py-0.5 rounded border border-[#a7f3d0]">
-                R {sixty60BayRent.toLocaleString()} / mo
+                R {formatNumber(sixty60BayRent)} / mo
               </span>
             </div>
             <input
@@ -152,7 +153,7 @@ export default function HubBudgetEstimator() {
                   Total Initial Pilot Capex
                 </div>
                 <div className="text-[32px] font-black text-white font-mono mt-1">
-                  ZAR {totalCapex.toLocaleString()}
+                  ZAR {formatNumber(totalCapex)}
                 </div>
               </div>
               <span className="text-[10px] font-mono bg-[#111a2e] text-[#38bdf8] border border-[#1e293b] px-2 py-1 rounded">
@@ -163,15 +164,15 @@ export default function HubBudgetEstimator() {
             <div className="mt-4 pt-3 border-t border-[#1e293b] space-y-1.5 text-[11px] font-mono">
               <div className="flex justify-between text-[#94a3b8]">
                 <span>E-Bikes + Tires ({bikeCount} units):</span>
-                <span className="text-white">R {totalBikeCapex.toLocaleString()}</span>
+                <span className="text-white">R {formatNumber(totalBikeCapex)}</span>
               </div>
               <div className="flex justify-between text-[#94a3b8]">
                 <span>Spare Hot-Swap Batteries ({spareBatteryCount} packs):</span>
-                <span className="text-white">R {totalBatteryCapex.toLocaleString()}</span>
+                <span className="text-white">R {formatNumber(totalBatteryCapex)}</span>
               </div>
               <div className="flex justify-between text-[#94a3b8]">
                 <span>8-Bay Rack, Lock Cabinet, 4G CCTV & Signs:</span>
-                <span className="text-white">R {rackCabinetSecurityCost.toLocaleString()}</span>
+                <span className="text-white">R {formatNumber(rackCabinetSecurityCost)}</span>
               </div>
             </div>
           </div>
@@ -186,13 +187,13 @@ export default function HubBudgetEstimator() {
               <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
                 <div className="text-[10px] font-mono text-[#64748b]">Anchor Sublease Income</div>
                 <div className="font-bold text-[#10b981] font-mono text-[14px]">
-                  +R {monthlyRentalRevenue.toLocaleString()} / mo
+                  +R {formatNumber(monthlyRentalRevenue)} / mo
                 </div>
               </div>
               <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
                 <div className="text-[10px] font-mono text-[#64748b]">Shared Staff & Maint. Opex</div>
                 <div className="font-bold text-[#dc2626] font-mono text-[14px]">
-                  -R {monthlyTotalOpex.toLocaleString()} / mo
+                  -R {formatNumber(monthlyTotalOpex)} / mo
                 </div>
               </div>
             </div>
@@ -200,7 +201,7 @@ export default function HubBudgetEstimator() {
             <div className="pt-2 border-t border-[#e2e8f0] flex justify-between items-center text-[12px]">
               <span className="text-[#475569]">Est. Monthly Feeder Volume:</span>
               <span className="font-mono font-bold text-[#005C99]">
-                {monthlyFeederTrips.toLocaleString()} trips (~R {Math.round(monthlyFeederFareVolume).toLocaleString()})
+                {formatNumber(monthlyFeederTrips)} trips (~R {formatNumber(monthlyFeederFareVolume)})
               </span>
             </div>
           </div>
